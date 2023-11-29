@@ -1,0 +1,138 @@
+[Serializable]
+public class Layer
+{
+    [SerializeField] public int numNodesIn,  numNodesOut;
+    [SerializeField] public double[] costGradientW;
+    [SerializeField] public double[] costGradientB;
+    [SerializeField]  public double[] weightedInputs;
+    [SerializeField] public double[] weights;
+    [SerializeField]  public double[] biases;
+
+    public Layer(int numNodesIn,int numNodesOut) {
+        this.numNodesIn= numNodesIn;
+        this.numNodesOut= numNodesOut;
+        costGradientW = new double[numNodesIn*numNodesOut];
+        costGradientB = new double[numNodesOut];
+        weightedInputs = new double[numNodesOut];
+        weights = new double[numNodesIn*numNodesOut];
+        biases = new double[numNodesOut];
+        InitializeRandomWeights();
+    }
+    public void InitializeRandomWeights()
+    {
+        System.Random rng = new System.Random();
+        for(int nodeIn = 0; nodeIn < numNodesIn; nodeIn++)
+        {
+            for(int nodeOut = 0; nodeOut < numNodesOut; nodeOut++)
+            {
+                double randomValue = rng.NextDouble() * 2 - 1;
+                weights[GetFlatWeightIndex(nodeIn, nodeOut)] = randomValue / MathF.Sqrt(numNodesIn);
+            }
+        }
+    }
+    public void ApplyGradients(double learnRate)
+    {
+        for(int nodeOut = 0; nodeOut < numNodesOut; nodeOut++)
+        {
+            biases[nodeOut] -= costGradientB[nodeOut] * learnRate;
+            for(int nodeIn = 0; nodeIn < numNodesIn; nodeIn++)
+            {
+                weights[GetFlatWeightIndex(nodeIn, nodeOut)] = costGradientW[GetFlatWeightIndex(nodeIn, nodeOut)] * learnRate;
+            }
+        }
+    }
+    double ActivationFunction(double weightedInput)
+    {
+        return 1 / (1 + Math.Exp(-weightedInput));
+    }
+    double ActivationDerivative(double weightedInput)
+    {
+        double activation = ActivationFunction(weightedInput);
+        return activation * (1 - activation);
+    }
+    public double NodeCost(double outputActivation, double expectedOutput)
+    {
+        double error = outputActivation - expectedOutput;
+        return error * error;
+    }
+    public double NodeCostDerivative(double outputActivation, double expectedOutput)
+    {
+        return 2 * (outputActivation - expectedOutput);
+    }
+    public double[] CalculateOutput(double[] inputs)
+    {
+        double[] activationValues = new double[numNodesOut];
+
+        for(int nodeOut = 0; nodeOut < numNodesOut; nodeOut++)
+        {
+            double weightedInput = biases[nodeOut];
+            for(int nodeIn = 0; nodeIn < numNodesIn; nodeIn++)
+            {
+                weightedInput += inputs[nodeIn] * weights[GetFlatWeightIndex(nodeIn, nodeOut)];
+            }
+            weightedInputs[nodeOut] = weightedInput;
+            activationValues[nodeOut] = ActivationFunction(weightedInput);
+        }
+        return activationValues;
+    }
+    public double[] CalculateOutputLayerNodeValues(double[] activations, double[] expectedOutputs)
+    {
+        double[] nodeValues = new double[expectedOutputs.Length];
+     
+        for (int i = 0; i < nodeValues.Length; i++)
+        {
+            double costDerivative = NodeCostDerivative(activations[i], expectedOutputs[i]);
+            double activationDerivative = ActivationDerivative(weightedInputs[i]);
+            nodeValues[i] = activationDerivative * costDerivative;
+        }
+        return nodeValues;
+    }
+    public double[] CalculateHiddenLayerNodeValues(Layer oldLayer , double[] oldNodeValues)
+    {
+        double[] newNodeValues = new double[numNodesOut];
+
+        for(int newNodeIndex = 0; newNodeIndex < newNodeValues.Length; newNodeIndex++)
+        {
+            double newNodeValue = 0;
+            for(int oldNodeIndex = 0; oldNodeIndex < oldNodeValues.Length; oldNodeIndex++)
+            {
+                double weightedInputDerivative = oldLayer.weights[newNodeIndex * oldNodeValues.Length + oldNodeIndex];
+                newNodeValue += weightedInputDerivative * oldNodeValues[oldNodeIndex];
+            }
+            newNodeValue *= ActivationDerivative(weightedInputs[newNodeIndex]);
+            newNodeValues[newNodeIndex] = newNodeValue;
+        }
+        return newNodeValues;
+    }
+    public void UpdateGradients(double[] inputs, double[] nodeValues)
+    {
+        for (int nodeOut = 0; nodeOut < numNodesOut; nodeOut++)
+        {
+            for (int nodeIn = 0; nodeIn < numNodesIn; nodeIn++)
+            {
+                var a = weights[nodeOut * numNodesIn + nodeIn];
+                var b = nodeValues[nodeOut];
+                double derivativeCostWrtWeight = weights[nodeOut * numNodesIn + nodeIn] * nodeValues[nodeOut];
+
+                costGradientW[GetFlatWeightIndex(nodeIn, nodeOut)] += derivativeCostWrtWeight;
+            }
+            double derivativeCostWrtBias = 1 * nodeValues[nodeOut];
+            costGradientB[nodeOut] += derivativeCostWrtBias;
+        }
+    }
+    public void ClearGradients()
+    {
+        for (int i = 0; i < costGradientW.Length; i++)
+            costGradientW[i] = 0;
+        for (int i = 0; i < costGradientB.Length; i++)
+            costGradientB[i] = 0;
+    }
+    private double GetWeight(int i, int j)
+    {
+        return weights[i + j * numNodesIn];
+    }
+    public int GetFlatWeightIndex(int i, int j)
+    {
+        return j * numNodesIn + i;
+    }
+}

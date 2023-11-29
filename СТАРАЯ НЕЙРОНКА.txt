@@ -1,0 +1,121 @@
+region
+[Serializable]
+
+public class NeuralNetwork
+{
+    [SerializeField] public Layer[] layers;
+    public NeuralNetwork(params int[] layerSizes)
+    {
+        layers = new Layer[layerSizes.Length - 1];
+        for(int i = 0; i < layers.Length; i++)
+        {
+            layers[i] = new Layer(layerSizes[i], layerSizes[i + 1]);
+        }
+    }
+    double[] CalculateOutputs(double[] inputs)
+    {
+        foreach(Layer layer in layers)
+        {
+            inputs = layer.CalculateOutput(inputs);
+        }
+        return inputs;
+    }
+    public double[] Classify(double[] inputs)
+    {
+        double[] outputs = CalculateOutputs(inputs);
+        return outputs;
+    }
+
+    double Cost(DataPoint dataPoint)
+    {
+        /*double[] outputs = CalculateOutputs(dataPoint.inputs);
+        Layer outputLayer = layers[layers.Length - 1];
+        double cost = 0;
+        for(int nodeOut = 0; nodeOut < outputs.Length; nodeOut++)
+        {
+            cost += outputLayer.NodeCost(outputs[nodeOut], dataPoint.expectedOutputs[nodeOut]);
+        }
+        return cost;*/
+        double[] outputs = CalculateOutputs(dataPoint.inputs); //DODELAI
+        Layer outputLayer = layers[layers.Length - 1];
+        double cost = 0;
+        for(int nodeOut = 0; nodeOut < outputs.Length; nodeOut++)
+        {
+            cost += outputLayer.NodeCost(outputs[nodeOut], dataPoint.expectedOutputs[nodeOut]); //DODELAI
+        }
+        return cost;
+    }
+    public double Cost(DataPoint[] data)
+    {
+        double totalCost = 0;
+        foreach(DataPoint dataPoint in data)
+        {
+            totalCost += Cost(dataPoint);
+        }
+        return totalCost / data.Length;
+    }
+    public void Learn(DataPoint[] trainingData,double learnRate)
+    {
+        foreach(var dataPoint in trainingData)
+        {
+            UpdateAllGradients(dataPoint);
+        }
+
+        ApplyAllGradients(learnRate / trainingData.Length);
+
+        ClearAllGradients();
+       /* const double h = 0.0001;
+        double originalCost = Cost(trainingData);
+
+        foreach(var layer in layers)
+        {
+            for(int nodeIn = 0; nodeIn < layer.numNodesIn; nodeIn++)
+            {
+                for(int nodeOut = 0; nodeOut < layer.numNodesOut; nodeOut++)
+                {
+                    layer.weights[layer.GetFlatWeightIndex(nodeIn, nodeOut)] += h;
+                    double deltaCost = Cost(trainingData) - originalCost;
+                    layer.weights[layer.GetFlatWeightIndex(nodeIn, nodeOut)] -= h;
+                    layer.costGradientW[layer.GetFlatWeightIndex(nodeIn, nodeOut)] = deltaCost / h;
+                }
+            }
+
+            for (int biasIndex = 0; biasIndex < layer.biases.Length; biasIndex++)
+            {
+                layer.biases[biasIndex] += h;
+                double deltaCost = Cost(trainingData) - originalCost;
+                layer.biases[biasIndex] -= h;
+                layer.costGradientB[biasIndex] = deltaCost / h;
+            }
+        }
+       
+        ApplyAllGradients(learnRate);*/
+    }
+    private void ApplyAllGradients(double learnRate)
+    {
+        foreach(var layer in layers)
+        {
+            layer.ApplyGradients(learnRate);
+        }
+    }
+    private void ClearAllGradients()
+    {
+        foreach(var layer in layers)
+        {
+            layer.ClearGradients();
+        }
+    }
+    void UpdateAllGradients(DataPoint dataPoint)
+    {
+        var inputs = CalculateOutputs(dataPoint.inputs);
+        Layer outputLayer = layers[layers.Length - 1];
+        double[] nodeValues = outputLayer.CalculateOutputLayerNodeValues(inputs, dataPoint.expectedOutputs);
+        outputLayer.UpdateGradients(inputs, nodeValues);
+        for(int hiddenLayerIndex = layers.Length - 2; hiddenLayerIndex >= 0; hiddenLayerIndex--)
+        {
+            Layer hiddenLayer = layers[hiddenLayerIndex];
+            nodeValues = hiddenLayer.CalculateHiddenLayerNodeValues(layers[hiddenLayerIndex + 1], nodeValues);
+            hiddenLayer.UpdateGradients(dataPoint.inputs, nodeValues);
+        }
+    }
+}
