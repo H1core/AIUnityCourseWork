@@ -26,10 +26,18 @@ public class NetworkSaveData
     // Load save data from file
     public static NeuralNetwork LoadNetworkFromFile(string path)
     {
-        using (var reader = new System.IO.StreamReader(path)) 
+        try
         {
-            string data = reader.ReadToEnd();
-            return LoadNetworkFromData(data);
+            using (var reader = new System.IO.StreamReader(path))
+            {
+                string data = reader.ReadToEnd();
+                return LoadNetworkFromData(data);
+            }
+        }
+        catch
+        {
+            return new NeuralNetwork(400, 128, 10);
+
         }
     }
 

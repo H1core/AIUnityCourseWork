@@ -16,7 +16,11 @@ public class ImageLoader : MonoBehaviour
 
     void Awake()
     {
-        images = LoadImages();
+        try
+        {
+            images = LoadImages();
+        }
+        catch { }
     }
 
     public Image GetImage(int i)
@@ -29,6 +33,7 @@ public class ImageLoader : MonoBehaviour
         DataPoint[] allData = new DataPoint[images.Length];
         for (int i = 0; i < allData.Length; i++)
         {
+            Debug.Log(images[i].label);
             allData[i] = DataFromImage(images[i]);
         }
         return allData;

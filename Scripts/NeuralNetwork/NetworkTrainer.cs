@@ -60,7 +60,7 @@ public class NetworkTrainer : MonoBehaviour
             LoadData();
         }
 
-        neuralNetwork = new NeuralNetwork(hyperParameters.layerSizes);
+        //neuralNetwork = new NeuralNetwork(hyperParameters.layerSizes);
         var activation = Activation.GetActivationFromType(hyperParameters.activationType);
         var outputLayerActivation = Activation.GetActivationFromType(hyperParameters.outputActivationType);
         neuralNetwork.SetActivationFunction(activation, outputLayerActivation);
@@ -104,6 +104,10 @@ public class NetworkTrainer : MonoBehaviour
         }
 
         UpdateSessionInfo();
+        if(Mathf.FloorToInt((float)sessionInfo.epochsCompleted)%100 == 0)
+        {
+            Save();
+        }
     }
 
     void EpochCompleted()

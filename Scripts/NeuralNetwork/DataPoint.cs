@@ -16,7 +16,7 @@ public struct DataPoint
     public static double[] CreateOneHot(int index, int num)
     {
         double[] oneHot = new double[num];
-        oneHot[index] = 1;
+        oneHot[index] = 1;  
         return oneHot;
     }
 }

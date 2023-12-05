@@ -1784,7 +1784,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1a567868c525aa9459c336f53ca0afdf, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  networkSaveName: TestNetwork
+  networkSaveName: UltraSuperNew
   trainingSplit: 0.8
   hyperParameters:
     layerSizes: 
@@ -1872,9 +1872,6 @@ MonoBehaviour:
   cursorObject: {fileID: 0}
   standartColor: {r: 0, g: 0, b: 0, a: 1}
   drawedColor: {r: 1, g: 1, b: 1, a: 1}
-  maxAngle: 22
-  maxBias: 10
-  noiseScale: 0.078
   inputField: {fileID: 0}
   networkTrainer: {fileID: 0}
   currentTexture: {fileID: 0}
