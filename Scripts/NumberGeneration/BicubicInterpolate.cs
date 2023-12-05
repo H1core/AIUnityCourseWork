@@ -22,33 +22,63 @@ public static class BicubicInterpolate
                 float sourceX = x * 1.0f / targetWidth * (source.width - 1);
                 float sourceY = y * 1.0f / targetHeight * (source.height - 1);
 
-                result.SetPixel(x, y, GetBilinearFilteredColor(source, sourceX, sourceY));
+                result.SetPixel(x, y, BicubicFilteredColor(source, sourceX, sourceY));
             }
         }
 
         result.Apply();
         return result;
     }
-
-    static Color GetBilinearFilteredColor(Texture2D texture, float x, float y)
+    static Color BicubicFilteredColor(Texture2D texture, float x, float y)
     {
         int xFloor = Mathf.FloorToInt(x);
         int yFloor = Mathf.FloorToInt(y);
-        int xCeil = Mathf.CeilToInt(x);
-        int yCeil = Mathf.CeilToInt(y);
 
-        Color topLeft = texture.GetPixel(xFloor, yCeil);
-        Color topRight = texture.GetPixel(xCeil, yCeil);
-        Color bottomLeft = texture.GetPixel(xFloor, yFloor);
-        Color bottomRight = texture.GetPixel(xCeil, yFloor);
+        float u = x - xFloor;
+        float v = y - yFloor;
 
-        float xLerp = x - xFloor;
-        float yLerp = y - yFloor;
+        float[] weights = new float[4];
+        for (int i = 0; i < 4; i++)
+        {
+            float d = Mathf.Abs(y - (yFloor - 1 + i));
+            weights[i] = CubicFilter(d);
+        }
 
-        Color top = Color.Lerp(topLeft, topRight, xLerp);
-        Color bottom = Color.Lerp(bottomLeft, bottomRight, xLerp);
+        Color finalColor = Color.black;
 
-        return Color.Lerp(bottom, top, yLerp);
+        for (int i = 0; i < 4; i++)
+        {
+            int yIndex = Mathf.Clamp(yFloor - 1 + i, 0, texture.height - 1);
+
+            for (int j = 0; j < 4; j++)
+            {
+                int xIndex = Mathf.Clamp(xFloor - 1 + j, 0, texture.width - 1);
+                finalColor += texture.GetPixel(xIndex, yIndex) * weights[i] * weights[j];
+            }
+        }
+
+        return finalColor;
+    }
+
+    static float CubicFilter(float x)
+    {
+        const float B = 0.04f;
+        const float C = 0.16f;
+        const float P0 = (6.0f - 2.0f * B) / 6.0f;
+        const float P2 = (-18.0f + 12.0f * B + 6.0f * C) / 6.0f;
+        const float P3 = (12.0f - 9.0f * B - 6.0f * C) / 6.0f;
+        const float P4 = (-B - 6.0f * C) / 6.0f;
+
+        x = Mathf.Abs(x);
+
+        if (x < 1.0f)
+        {
+            return P0 + x * x * (P2 + x * P3);
+        }
+        else
+        {
+            return P4 * (Mathf.Pow((x - 1.0f), 3));
+        }
     }
 
 }

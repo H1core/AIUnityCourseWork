@@ -50,6 +50,22 @@ public class DrawScript : MonoBehaviour, IPointerDownHandler, IPointerUpHandler,
         startTexture.filterMode = FilterMode.Point;
         return startTexture;
     }
+
+    public Texture2D AlignDrawing()
+    {
+        var texture = currentTexture;
+        var edges = ProgrammLogic.FindEdgePixels(texture, ImageSize);
+        //currentTexture = ProgrammLogic.AddBiasToImage(currentTexture, ImageSize, ImageSize - 1 - edges.upper, -edges.lefted);
+        
+        int BiasX = 10 - ((edges.upper + edges.lower) / 2);
+        int BiasY = 10 - ((edges.righted + edges.lefted) / 2);
+        texture = ProgrammLogic.AddBiasToImage(texture, ImageSize, BiasX, BiasY);
+
+        texture.filterMode = FilterMode.Point;
+        Debug.Log($"Center of drawing: ({(edges.upper + edges.lower) / 2} , {(edges.righted + edges.lefted) / 2})\nBias for this Drawing: ({BiasX} , {BiasY})");
+        return texture;
+
+    }
     public void Clear()
     {
         allActions.Clear();

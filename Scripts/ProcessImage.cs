@@ -12,6 +12,7 @@ public class ProcessImage : MonoBehaviour
     [Range(0.0f, 1f)]
     [SerializeField] private float imageSizeScale = 0.5f;
     [SerializeField] private DrawScript ds;
+    [SerializeField] private bool isScale;
     private int ImageSize;
     private void Awake()
     {
@@ -45,20 +46,6 @@ public class ProcessImage : MonoBehaviour
         ds.currentTexture = rotatedTexutre;
         ds.UpdateTexture();
     }
-    Texture2D createEmptyField()
-    {
-        Texture2D startTexture = new Texture2D(ds.ImageSize, ImageSize);
-        for (int i = 0; i < ImageSize; i++)
-        {
-            for (int j = 0; j < ImageSize; j++)
-            {
-                startTexture.SetPixel(i, j, ds.standartColor);
-            }
-        }
-        startTexture.Apply();
-        startTexture.filterMode = FilterMode.Point;
-        return startTexture;
-    }
     public void AddParticles()
     {
         float whiteNoiseFunction(float minimalValue, float maximalValue)
@@ -84,38 +71,16 @@ public class ProcessImage : MonoBehaviour
     {
         void ClampNandM(ref int n, ref int m)
         {
-            int lefted = 20, righted = 0, upper = 0, lower = 20;
-            for (int i = 0; i < ds.ImageSize; i++)
-            {
-                for (int j = 0; j < ds.ImageSize; j++)
-                {
-                    if (ds.currentTexture.GetPixel(i, j).r + 0.05 >= 0.215)
-                    {
-                        if (lefted > i)
-                        {
-                            lefted = i;
-                        }
-                        if (righted < i)
-                        {
-                            righted = i;
-                        }
-                        if (upper < j)
-                            upper = j;
-                        if (lower > j)
-                            lower = j;
-                    }
-                }
-            }
-            //Debug.Log($"L{lefted}, R{righted} , U{upper} , LOWER{lower}");
+            var edges = ProgrammLogic.FindEdgePixels(ds.currentTexture, ds.ImageSize);
             if (m < 0)
-                m = Max(m, -lefted);
+                m = Max(m, -edges.lefted);
             else
-                m = Min(m, ds.ImageSize - righted - 1);
+                m = Min(m, ds.ImageSize - edges.righted - 1);
             if (n < 0)
-                n = Max(n, -lower);
-            else n = Min(n, ds.ImageSize - upper - 1);
+                n = Max(n, -edges.lower);
+            else n = Min(n, ds.ImageSize - edges.upper - 1);
         }
-        Texture2D biasedTexture = createEmptyField();
+        
         
         int a = UnityEngine.Random.Range(-maxBias, maxBias);
         int b = UnityEngine.Random.Range(-maxBias, maxBias);
@@ -125,27 +90,15 @@ public class ProcessImage : MonoBehaviour
             b = smej;
         }
         ClampNandM(ref a, ref b);
-
-
-        //processNandM(ref n, ref m);
-        for (int i = 0; i < ds.ImageSize; i++)
-        {
-            for (int j = 0; j < ds.ImageSize; j++)
-            {
-                int ShiftedX = (i + b + ds.ImageSize) % ds.ImageSize;
-                int ShiftedY = (j + a + ds.ImageSize) % ds.ImageSize;
-                biasedTexture.SetPixel(ShiftedX, ShiftedY, ds.currentTexture.GetPixel(i, j));
-            }
-        }
-        biasedTexture.Apply();
-        ds.currentTexture = biasedTexture;
+        ds.currentTexture = ProgrammLogic.AddBiasToImage(ds.currentTexture, ds.ImageSize , a , b);
         ds.UpdateTexture();
     }
     public void Generate()
     {
         var saveCurrent = ds.currentTexture;
-        ScaleImage();
         RotateDrawing();
+        if(isScale)
+            ScaleImage();
         AddBias(0);
         AddParticles();
         ds.UpdateTexture();

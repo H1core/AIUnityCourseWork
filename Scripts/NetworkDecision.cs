@@ -26,6 +26,7 @@ public class NetworkDecision : MonoBehaviour
     private void Update()
     {
         ClassifyInput();
+        //drawScript.AlignDrawing();
     }
     public class OutputData : IComparable<OutputData>
     {
@@ -45,11 +46,12 @@ public class NetworkDecision : MonoBehaviour
     public void ClassifyInput()
     {
         double[] pixelsInputs = new double[ImageSize * ImageSize];
+        var texture = drawScript.AlignDrawing();
         for (int i = 0; i < ImageSize; i++)
         {
             for (int j = 0; j < ImageSize; j++)
             {
-                pixelsInputs[i * ImageSize + j] = drawScript.currentTexture.GetPixel(i, j).r;
+                pixelsInputs[i * ImageSize + j] = texture.GetPixel(i, j).r;
             }
         }
         var res = networkTrainer.neuralNetwork.Classify(pixelsInputs);
