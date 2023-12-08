@@ -11,6 +11,8 @@ public class ProcessImage : MonoBehaviour
     [SerializeField] private float noiseScale = 0.2f;
     [Range(0.0f, 1f)]
     [SerializeField] private float imageSizeScale = 0.5f;
+    [Range(1, 100)]
+    [SerializeField] private int GenerationCount;
     [SerializeField] private DrawScript ds;
     [SerializeField] private bool isScale;
     private int ImageSize;
@@ -21,7 +23,7 @@ public class ProcessImage : MonoBehaviour
     }
     public void Generate100()
     {
-        for(int i = 0; i < 100; i++)
+        for(int i = 0; i < GenerationCount; i++)
         {
             Generate();
         }
@@ -31,7 +33,8 @@ public class ProcessImage : MonoBehaviour
         var scale = UnityEngine.Random.Range(imageSizeScale, 1);
         //scale = imageSizeScale;
         int newSize = (int)(ImageSize * scale);
-        Texture2D newTexture = BicubicInterpolate.ScaleImage(ds.currentTexture, newSize , newSize , ImageSize);
+        //Texture2D newTexture = BicubicInterpolate.ScaleImage(ds.currentTexture, newSize , newSize , ImageSize);
+        Texture2D newTexture = SplineScale.SplineScaleTexture(ds.currentTexture, newSize, newSize, ImageSize);
         ds.currentTexture = newTexture;
         int smej = (ImageSize - (int)(ImageSize * scale));
         AddBias(smej / 2);
@@ -82,8 +85,8 @@ public class ProcessImage : MonoBehaviour
         }
         
         
-        int a = UnityEngine.Random.Range(-maxBias, maxBias);
-        int b = UnityEngine.Random.Range(-maxBias, maxBias);
+        int a = UnityEngine.Random.Range(0, maxBias + 1);
+        int b = UnityEngine.Random.Range(0, maxBias + 1);
         if (smej > 0)
         {
             a = smej;
@@ -96,9 +99,9 @@ public class ProcessImage : MonoBehaviour
     public void Generate()
     {
         var saveCurrent = ds.currentTexture;
-        RotateDrawing();
-        if(isScale)
+        if (isScale)
             ScaleImage();
+        RotateDrawing();
         AddBias(0);
         AddParticles();
         ds.UpdateTexture();

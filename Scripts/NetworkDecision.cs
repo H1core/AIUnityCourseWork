@@ -15,6 +15,7 @@ public class NetworkDecision : MonoBehaviour
     [SerializeField] private DrawScript drawScript;
 
     private int ImageSize;
+    static private string[] numbersName = new string[]{ "ÍÎËÜ", "ÎÄÈÍ", "ÄÂÀ", "ÒĞÈ", "×ÅÒÛĞÅ", "ÏßÒÜ", "ØÅÑÒÜ", "ÑÅÌÜ", "ÂÎÑÅÌÜ", "ÄÅÂßÒÜ" };
     private void Awake()
     {
         //if (instance == null)
@@ -55,7 +56,7 @@ public class NetworkDecision : MonoBehaviour
             }
         }
         var res = networkTrainer.neuralNetwork.Classify(pixelsInputs);
-        finalDecision.text = $"I think it's: {res.predictedClass}";
+        finalDecision.text = $"{numbersName[res.predictedClass]}";
 
         List<OutputData> outputData = new List<OutputData>();
         for(int i = 0; i < res.outputs.Length; i++)
@@ -67,7 +68,7 @@ public class NetworkDecision : MonoBehaviour
         
         for(int i = 0; i < outputData.Count; i++)
         {
-            outputFields[i].text = $"Number {outputData[i].value}: {Mathf.FloorToInt((float)outputData[i].percent * 1000)/10f}%";
+            outputFields[i].text = $"Öèôğà {outputData[i].value}: {Mathf.FloorToInt((float)outputData[i].percent * 1000)/10f}%";
         }
         /*StringBuilder data = new StringBuilder();
         Texture2D texture = GetComponent<Image>().sprite.texture;
